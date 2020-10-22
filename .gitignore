@@ -1,7 +1,10 @@
 # Other files
-CustomInsider_PnP.pdf
+ffmpeg/
+*.mp3
+*.csv
+*.pdf
 *.env
-
+.idea
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
