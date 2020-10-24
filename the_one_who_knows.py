@@ -39,13 +39,9 @@ class TheOneWhoKnows:
         if command == "":
             return "message channel", TheOneWhoKnows.commands_for_game, TheOneWhoKnows.instructions
         if "assign" in command:
-            print(len(users))
             roles = game.assign_roles(users)
             while len(users) < 3:
-            # while roles == "not enough players":
-                # return "message channel", 'Not enough players to assign roles'
-                users.append(users[0])
-            print(len(users))
+                return "message channel", 'Not enough players to assign roles'
             user_to_dm_dict = {}
             for i in range(len(users)):
                 user_to_dm_dict[users[i].id] = roles[i]

@@ -1,7 +1,7 @@
 import asyncio
 import discord
 from the_one_who_knows import TheOneWhoKnows
-from political_revolution import PoliticalRevolution
+from words_for_monsters import WordsForMonsters
 import random
 from bbgb_timer import BBGBTimer
 
@@ -10,7 +10,7 @@ with open("token.env", "r") as f:
     discord_token = f.read()
 
 towk_games = {}
-pr_games = {}
+wfm_games = {}
 philosophise_list = ["I am tired of being caught in the tangle of your lives.",
                      "COMMAND ME NOT MORTAL, oooooohhh is that ice cream? Can I have some? Pwease? I'll trade you immortality.",
                      "Power attracts the corruptible. Suspect any who seek it.",
@@ -43,13 +43,17 @@ async def on_message(message):
     global towk_games
     message_content = message.content.lower()
     current_channel_users = get_voice_channel_users(client.get_all_channels())
+    isDM =  isinstance(message.channel, discord.channel.DMChannel)
     if message_content.contains("-ch"):
         index_of_number = message_content.find("-ch") + 3
         current_channel_users = get_voice_channel_users(client.get_all_channels(), message_content[index_of_number:])
     if message_content == "!hello":
         await message.channel.send("Hey choombattas. Available games: '!!towk'. That's all for now folks")
     elif message_content == "!speak":
-        await dm_user(message.author.id, random.choice(philosophise_list))
+        if isDM:
+            await dm_user(message.author.id, random.choice(philosophise_list))
+        else:
+            await message.channel.send(random.choice(philosophise_list))
     elif message_content == "how to":
         await message.channel.send(how_to_string)
     elif message_content == "!timer left" or message_content == "!time":
@@ -73,11 +77,11 @@ async def on_message(message):
             await game_event( await TheOneWhoKnows.command_handler(
                 towk_games[message.guild.id], message_content[6:], current_channel_users,
                 game_event))
-    elif message_content.startswith("!pr"):
-        if message.guild.id not in pr_games:
-            pr_games[message.guild.id] = PoliticalRevolution(message.guild.id)
-        await game_event(PoliticalRevolution.command_handler(
-            pr_games[message.guild.id], message_content[3:], current_channel_users
+    elif message_content.startswith("!wfm"):
+        if message.guild.id not in wfm_games:
+            wfm_games[message.guild.id] = WordsForMonsters(message.guild.id)
+        await game_event(WordsForMonsters.command_handler(
+            wfm_games[message.guild.id], message_content[3:], current_channel_users, isDM
         ))
 
 
@@ -97,6 +101,8 @@ async def game_event(*args):
         users_to_message_dict = args[1]
         for user, message in users_to_message_dict.items():
             await dm_user(user, message)
+    if action == "message channel":
+        args[1].send(args[2])
     if action == "timer done":
         args[2].send("TIMER DONE, VOTE AND SEE WHO WON")
         await play_notification(args[1])
