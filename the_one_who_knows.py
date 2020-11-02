@@ -1,13 +1,14 @@
 import random
 import time
-from datetime import datetime
 
 
 class TheOneWhoKnows:
-    commands_for_game = "'!towk assign' will assign roles to players," \
+    commands_for_game = "The One Who Knows:\n" \
+                        "'!towk assign' will assign roles to players," \
                        "'!towk start' will start the timer (this is when you start asking the master)" \
                        "To see the remaining time either '!towk timer left' or '!time' (although with multiple games this might bug)"
-    instructions = "Game Master: You know the word, you want the players to find the word, you can answer questions with Yes, No or Maybe.\n" \
+    instructions = "The One Who Knows:\n" \
+                   "Game Master: You know the word, you want the players to find the word, you can answer questions with Yes, No or Maybe.\n" \
                    "Plebs: Self explanatory really, you ask questions to find the word.\n" \
                    "The One Who Knows (OWK): You know the word, you have to help the Plebs find the word without them realising you are The One Who Knows (by also asking questions\n" \
                    "After the timer runs out, the Game Master will receive a direct message saying so. If they players haven't found the word they've lost." \
@@ -35,13 +36,13 @@ class TheOneWhoKnows:
 
     # command should be the string after !twok
     @classmethod
-    async def command_handler(cls, game, command, users=None, timer=None):
+    async def command_handler(cls, game, command, users=None, message_channel=None, timer=None):
         if command == "":
-            return "message channel", TheOneWhoKnows.commands_for_game, TheOneWhoKnows.instructions
+            return "message channel", message_channel, TheOneWhoKnows.commands_for_game, TheOneWhoKnows.instructions
         if "assign" in command:
             roles = game.assign_roles(users)
             while len(users) < 3:
-                return "message channel", 'Not enough players to assign roles'
+                return "message channel", message_channel, 'Not enough players to assign roles'
             user_to_dm_dict = {}
             for i in range(len(users)):
                 user_to_dm_dict[users[i].id] = roles[i]

@@ -40,48 +40,49 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    global towk_games
     message_content = message.content.lower()
-    current_channel_users = get_voice_channel_users(client.get_all_channels())
-    isDM =  isinstance(message.channel, discord.channel.DMChannel)
-    if message_content.contains("-ch"):
+    current_channel_users, current_vc = get_voice_channel_users(client.get_all_channels())
+    is_dm = message.guild is not None
+    if "-ch" in message_content:
         index_of_number = message_content.find("-ch") + 3
-        current_channel_users = get_voice_channel_users(client.get_all_channels(), message_content[index_of_number:])
+        current_channel_users, current_vc = get_voice_channel_users(client.get_all_channels(),
+                                                                    message_content[index_of_number:].strip())
+    game_key = current_vc.id if current_vc.id else message.guild.id
     if message_content == "!hello":
         await message.channel.send("Hey choombattas. Available games: '!!towk'. That's all for now folks")
     elif message_content == "!speak":
-        if isDM:
+        if is_dm:
             await dm_user(message.author.id, random.choice(philosophise_list))
         else:
             await message.channel.send(random.choice(philosophise_list))
     elif message_content == "how to":
         await message.channel.send(how_to_string)
     elif message_content == "!timer left" or message_content == "!time":
-        await message.channel.send(f"{towk_games[message.guild.id].timer_left()} seconds left")
+        await message.channel.send(f"{towk_games[game_key].timer_left()} seconds left")
     elif message_content == "!notify":
         for vc in message.guild.voice_channels:
             await play_notification(vc)
     elif message_content.startswith("!towk"):
-        if message.guild.id not in towk_games:
-            towk_games[message.guild.id] = TheOneWhoKnows(message.guild.id)
+        if game_key not in towk_games:
+            towk_games[game_key] = TheOneWhoKnows(game_key)
         if message_content == "!towk start" or message_content == "!towk timer left":
             temp = await TheOneWhoKnows.command_handler(
-                    towk_games[message.guild.id], message_content[6:], current_channel_users,
+                    towk_games[game_key], message_content[6:], current_channel_users,
                     timer=BBGBTimer(message.guild,
-                                    towk_games[message.guild.id].timer_length, game_event, message.channel))
+                                    towk_games[game_key].timer_length, game_event, message.channel))
             game_event_input = []
             [game_event_input.append(item) for item in temp]
             game_event_input.append(message.channel)
             await game_event(game_event_input)
         else:
-            await game_event( await TheOneWhoKnows.command_handler(
-                towk_games[message.guild.id], message_content[6:], current_channel_users,
-                game_event))
+            await game_event(await TheOneWhoKnows.command_handler(
+                towk_games[game_key], message_content[6:], current_channel_users, game_event))
     elif message_content.startswith("!wfm"):
-        if message.guild.id not in wfm_games:
-            wfm_games[message.guild.id] = WordsForMonsters(message.guild.id)
+        if game_key not in wfm_games:
+            wfm_games[game_key] = WordsForMonsters(game_key)
         await game_event(WordsForMonsters.command_handler(
-            wfm_games[message.guild.id], message_content[3:], current_channel_users, isDM
+            wfm_games[game_key], message_content[4:], is_dm, current_channel_users, message_channel=message.channel,
+            user=message.author
         ))
 
 
@@ -97,12 +98,11 @@ async def game_event(*args):
         print("none run")
         return
     if action == "dm":
-        print("dming users")
         users_to_message_dict = args[1]
         for user, message in users_to_message_dict.items():
-            await dm_user(user, message)
+            await dm_user(user.id, message)
     if action == "message channel":
-        args[1].send(args[2])
+        await args[1].send(args[2])
     if action == "timer done":
         args[2].send("TIMER DONE, VOTE AND SEE WHO WON")
         await play_notification(args[1])
@@ -129,17 +129,25 @@ async def play_notification(channel):
 
 def get_voice_channel_users(all_channels, number=None):
     users = []
-
+    selected_channel = None
     for channel in all_channels:
         if number is None:
-            if "2bgb" in channel.name:
+            if "2bgb" in channel.name :
+                selected_channel = channel
+                print(channel)
+                print(channel.members)
                 for member in channel.members:
+                    print(member)
                     users.append(member)
+                break
         else:
             if "2bgb" in channel.name and channel.name.endswith(number):
+                selected_channel = channel
+                print(channel.members)
                 for member in channel.members:
                     users.append(member)
-    return users
+                break
+    return users, selected_channel
 
 
 
